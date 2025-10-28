@@ -5,16 +5,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Conversor YouTube para MP3</title>
+    <title>YouTube MP3 Converter</title>
+    <!-- Google Fonts - Poppins -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f4f4f9;
+            background-color: #f0f2f5; /* Light gray background */
         }
         .container {
             background: white;
@@ -24,10 +26,14 @@
             text-align: center;
             width: 90%;
             max-width: 500px;
+            box-sizing: border-box; /* Include padding in width calculation */
+            position: relative;
         }
         h1 {
-            color: #333;
+            color: #343a40; /* Darker text */
             margin-bottom: 20px;
+            font-size: 28px;
+            font-weight: 600;
         }
         input[type="text"] {
             width: calc(100% - 22px);
@@ -36,30 +42,41 @@
             border-radius: 5px;
             font-size: 16px;
             margin-bottom: 20px;
+            box-sizing: border-box;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #e62117; /* YouTube red on focus */
+            box-shadow: 0 0 0 3px rgba(230, 33, 23, 0.2);
         }
         .btn {
-            background-color: #ff0000;
+            background-color: #e62117; /* YouTube red */
             color: white;
             padding: 12px 20px;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
-            transition: background-color 0.3s;
+            font-weight: 500;
+            transition: background-color 0.3s, transform 0.2s;
         }
         .btn:hover {
-            background-color: #cc0000;
+            background-color: #c21c14; /* Darker red on hover */
+            transform: translateY(-2px);
         }
         .cancel-btn {
             background-color: #6c757d;
             margin-left: 10px;
         }
         .cancel-btn:hover {
-            background-color: #5a6268;
+            background-color: #5a6268; /* Darker gray on hover */
+            transform: translateY(-2px);
         }
         .btn:disabled {
             background-color: #aaa;
             cursor: not-allowed;
+            transform: none; /* No transform when disabled */
         }
         .download-area {
             margin-top: 30px;
@@ -67,20 +84,41 @@
         .download-btn {
             background-color: #28a745;
             text-decoration: none;
+            display: inline-block; /* To apply padding and margin correctly */
+            margin-top: 15px;
         }
         .download-btn:hover {
             background-color: #218838;
+        }
+        .convert-another-btn {
+            background-color: #007bff; /* Blue for secondary action */
+            margin-left: 10px;
+        }
+        .convert-another-btn:hover {
+            background-color: #0069d9;
+        }
+        #message-area {
+            margin-top: 20px;
+            font-size: 15px;
+            color: #dc3545; /* Default to error red */
+            min-height: 20px; /* Prevent layout shift */
+        }
+        #message-area.success {
+            color: #28a745; /* Green for success messages */
+        }
+        #message-area.info {
+            color: #007bff; /* Blue for info messages */
         }
         .hidden {
             display: none;
         }
         .loader {
             border: 4px solid #f3f3f3;
-            border-top: 4px solid #ff0000;
+                border-top: 4px solid #e62117; /* Consistent YouTube red */
             border-radius: 50%;
             width: 40px;
             height: 40px;
-            animation: spin 1s linear infinite;
+            animation: spin 0.8s linear infinite;
             margin: 10px auto;
         }
         .progress-container {
@@ -92,12 +130,17 @@
         .progress-bar {
             width: 0%;
             height: 20px;
-            background-color: #ff0000;
+            background-color: #e62117; /* Consistent YouTube red */
             border-radius: 5px;
             text-align: center;
             line-height: 20px;
             color: white;
             transition: width 0.4s ease;
+            font-size: 14px;
+            /* Animated stripes */
+            background-image: linear-gradient(45deg, rgba(255, 255, 255, .15) 25%, transparent 25%, transparent 50%, rgba(255, 255, 255, .15) 50%, rgba(255, 255, 255, .15) 75%, transparent 75%, transparent);
+            background-size: 40px 40px;
+            animation: progress-bar-stripes 1s linear infinite;
         }
         .video-info {
             margin-top: 30px;
@@ -110,20 +153,72 @@
             margin-bottom: 15px;
         }
         .video-info h2 {
-            font-size: 18px;
-            color: #333;
+            font-size: 20px;
+            color: #343a40;
+            font-weight: 500;
             margin: 0;
         }
         @keyframes spin {
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        @keyframes progress-bar-stripes {
+            from {
+                background-position: 40px 0;
+            }
+            to {
+                background-position: 0 0;
+            }
+        }
+        .stats-footer {
+            position: absolute;
+            bottom: 10px;
+            right: 15px;
+            font-size: 12px;
+            color: #aaa;
+        }
+
+        /* --- Media Queries for Mobile Responsiveness --- */
+        @media (max-width: 600px) {
+            body {
+                /* Allow scrolling on small screens and add some top space */
+                align-items: flex-start;
+                padding: 20px 0;
+            }
+            .container {
+                /* Reduce padding and use full width */
+                padding: 25px 20px;
+                width: 95%;
+                margin: 0;
+            }
+            h1 {
+                font-size: 22px;
+            }
+            p {
+                font-size: 14px;
+            }
+            .btn {
+                /* Make buttons full-width and stack them */
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+                margin-bottom: 10px;
+            }
+            .cancel-btn, .convert-another-btn {
+                margin-left: 0; /* Remove left margin when stacked */
+            }
+            .stats-footer {
+                /* Reposition the stats footer for mobile */
+                position: static;
+                margin-top: 20px;
+            }
+        }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h1>Conversor YouTube para MP3</h1>
+        <h1>YouTube MP3 Converter</h1>
         <p>Cole o link do vídeo do YouTube abaixo e clique em converter.</p>
         
         <input type="text" id="youtube-url" placeholder="https://www.youtube.com/watch?v=...">
@@ -146,6 +241,9 @@
         <div id="download-area" class="download-area hidden">
             <p id="download-message">Seu MP3 está pronto!</p>
             <a id="download-link" class="btn download-btn" href="#" download>Baixar MP3</a>
+            <button id="convert-another-btn" class="btn convert-another-btn">Converter Outro Vídeo</button>
+
+            <div class="stats-footer">Downloads totais: <span id="total-downloads">...</span></div>
         </div>
     </div>
 
@@ -153,6 +251,7 @@
         const convertBtn = document.getElementById('convert-btn');
         const cancelBtn = document.getElementById('cancel-btn');
         const urlInput = document.getElementById('youtube-url');
+        const convertAnotherBtn = document.getElementById('convert-another-btn');
         const loader = document.getElementById('loader');
         const messageArea = document.getElementById('message-area');
         const downloadArea = document.getElementById('download-area');
@@ -166,27 +265,32 @@
         let currentTaskId = null;
         let eventSource;
 
+        function resetUI() {
+            if (eventSource) {
+                eventSource.close();
+            }
+            urlInput.value = '';
+            convertBtn.disabled = true;
+            cancelBtn.classList.add('hidden');
+            cancelBtn.disabled = false; // Ensure cancel button is enabled if it reappears
+            loader.classList.add('hidden');
+            messageArea.textContent = '';
+            messageArea.classList.remove('success', 'info');
+            downloadArea.classList.add('hidden');
+            videoInfoDiv.classList.add('hidden');
+            progressContainer.classList.add('hidden');
+            progressBar.style.width = '0%'; /* Reset width */
+            progressBar.textContent = '0%';
+            convertBtn.disabled = false;
+        }
+
         convertBtn.addEventListener('click', async () => {
             const videoURL = urlInput.value.trim();
             if (!videoURL) {
                 messageArea.textContent = 'Por favor, insira uma URL válida.';
                 return;
             }
-
-            if (eventSource) {
-                eventSource.close();
-            }
-
-            // Reset UI
-            convertBtn.disabled = true;
-            cancelBtn.classList.add('hidden');
-            loader.classList.remove('hidden');
-            messageArea.textContent = 'Iniciando conversão...';
-            downloadArea.classList.add('hidden');
-            videoInfoDiv.classList.add('hidden');
-            progressContainer.classList.add('hidden');
-            progressBar.style.width = '0%';
-            progressBar.textContent = '0%';
+            resetUI(); // Reset before starting a new conversion
             
             try {
                 const response = await fetch('/convert', {
@@ -202,14 +306,16 @@
                 if (response.ok && data.task_id) {
                     currentTaskId = data.task_id;
                     cancelBtn.classList.remove('hidden');
+                    cancelBtn.disabled = false;
                     loader.classList.add('hidden');
                     
                     // Exibe a miniatura e o título
                     videoThumbnail.src = data.thumbnail;
                     videoTitle.textContent = data.title;
                     videoInfoDiv.classList.remove('hidden');
-
+                    
                     progressContainer.classList.remove('hidden');
+                    messageArea.classList.add('info');
                     messageArea.textContent = 'Download em andamento...';
                     // Conecta ao endpoint de progresso
                     eventSource = new EventSource(`/progress/${data.task_id}`);
@@ -221,6 +327,7 @@
                             if (finalData.status === 'finished') {
                                 progressBar.style.width = '100%';
                                 progressBar.textContent = '100%';
+                                messageArea.classList.add('success');
                                 messageArea.textContent = '';
                                 
                                 downloadLink.href = `/download/${finalData.filename}`;
@@ -229,20 +336,24 @@
                                 downloadArea.classList.remove('hidden');
                                 eventSource.close();
                                 convertBtn.disabled = false;
-                                cancelBtn.classList.add('hidden');
+                                cancelBtn.classList.add('hidden'); // Hide cancel button on completion
                             } else if (finalData.status === 'error') {
+                                messageArea.classList.remove('info', 'success');
                                 messageArea.textContent = `Erro: Ocorreu um problema na conversão.`;
                                 eventSource.close();
                                 convertBtn.disabled = false;
                                 cancelBtn.classList.add('hidden');
                             } else if (finalData.status === 'cancelled') {
+                                messageArea.classList.remove('info', 'success');
                                 messageArea.textContent = 'Download cancelado pelo usuário.';
                                 progressContainer.classList.add('hidden');
                                 eventSource.close();
                                 convertBtn.disabled = false;
                                 cancelBtn.classList.add('hidden');
+                                videoInfoDiv.classList.add('hidden'); // Hide video info on cancel
                             }
                         } catch (e) {
+                            messageArea.classList.remove('success'); // Remove success class if it was there
                             // Se não for JSON, é uma atualização de progresso (número)
                             const progress = parseInt(event.data, 10);
                             progressBar.style.width = progress + '%';
@@ -251,14 +362,17 @@
                     };
 
                     eventSource.onerror = function() {
+                        messageArea.classList.remove('info', 'success');
                         messageArea.textContent = 'Erro de conexão com o servidor para atualizações de progresso.';
                         eventSource.close();
                         convertBtn.disabled = false;
                         progressContainer.classList.add('hidden');
                         cancelBtn.classList.add('hidden');
+                        videoInfoDiv.classList.add('hidden');
                     };
 
                 } else {
+                    messageArea.classList.remove('info', 'success');
                     messageArea.textContent = `Erro: ${data.error || 'Ocorreu um problema.'}`;
                     convertBtn.disabled = false;
                     loader.classList.add('hidden');
@@ -274,6 +388,7 @@
             if (!currentTaskId) return;
 
             cancelBtn.disabled = true;
+            messageArea.classList.add('info');
             messageArea.textContent = 'Cancelando...';
 
             await fetch(`/cancel/${currentTaskId}`, {
@@ -282,6 +397,21 @@
             
             // O eventSource cuidará de atualizar a UI para o estado final "cancelled"
             cancelBtn.disabled = false;
+        });
+    </script>
+    <script>
+        // Separate script block for the new button's logic
+        document.getElementById('convert-another-btn').addEventListener('click', resetUI);
+
+        // Fetch and display stats on page load
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const response = await fetch('/stats');
+                const data = await response.json();
+                document.getElementById('total-downloads').textContent = data.downloads_completed || 0;
+            } catch (error) {
+                document.getElementById('total-downloads').textContent = 'N/A';
+            }
         });
     </script>
 
