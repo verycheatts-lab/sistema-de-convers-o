@@ -24,4 +24,4 @@ EXPOSE 8000
 
 # 7. Comando para rodar a aplicação com Gunicorn quando o container iniciar
 # O 'app:app' significa: no arquivo 'app.py', encontre a instância Flask chamada 'app'.
-CMD ["gunicorn", "app:app"]
+CMD ["gunicorn", "--worker-class", "gevent", "--timeout", "120", "--bind", "0.0.0.0:8000", "app:app"]
