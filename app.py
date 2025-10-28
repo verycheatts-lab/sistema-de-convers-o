@@ -22,6 +22,7 @@ YDL_OPTIONS = {
     }],
     'noplaylist': True, # Evita baixar playlists inteiras
     'restrictfilenames': True, # Garante nomes de arquivo seguros, evitando caracteres especiais.
+    'nopart': True, # Evita o uso de arquivos .part, contornando problemas de latência do sistema de arquivos.
     'cookiefile': 'cookies.txt', # Usa o arquivo de cookies para autenticação
     # 'ffmpeg_location' não é mais necessário, pois o FFmpeg estará no PATH do container.
 }
