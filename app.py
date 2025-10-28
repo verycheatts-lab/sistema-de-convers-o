@@ -28,13 +28,54 @@ YDL_OPTIONS = {
 # Dicionário para armazenar o progresso dos downloads (não é seguro para produção com múltiplos workers)
 download_progress = {}
 
+# Lógica para limpeza de arquivos antigos
+CLEANUP_INTERVAL_SECONDS = 3600  # 1 hora
+CLEANUP_AGE_SECONDS = 24 * 3600  # 24 horas
+
+def cleanup_old_files():
+    """Remove arquivos da pasta de downloads mais antigos que CLEANUP_AGE_SECONDS."""
+    try:
+        now = time.time()
+        for filename in os.listdir(DOWNLOAD_FOLDER):
+            file_path = os.path.join(DOWNLOAD_FOLDER, filename)
+            # Verifica se é um arquivo e não um diretório
+            if os.path.isfile(file_path):
+                # Compara a idade do arquivo com o limite
+                if os.path.getmtime(file_path) < now - CLEANUP_AGE_SECONDS:
+                    os.remove(file_path)
+                    print(f"Arquivo antigo removido: {filename}")
+    except Exception as e:
+        print(f"Erro durante a limpeza de arquivos: {e}")
+
+def run_cleanup_scheduler():
+    """Executa a função de limpeza em intervalos regulares."""
+    while True:
+        cleanup_old_files()
+        time.sleep(CLEANUP_INTERVAL_SECONDS)
+
+# Lógica para estatísticas
+STATS_FILE = 'stats.json'
+app_stats = {'downloads_completed': 0}
+stats_lock = threading.Lock()
+
+def load_stats():
+    """ Carrega as estatísticas do arquivo JSON. """
+    global app_stats
+    try:
+        with open(STATS_FILE, 'r') as f:
+            app_stats = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        app_stats = {'downloads_completed': 0}
+
+def save_stats():
+    """ Salva as estatísticas no arquivo JSON de forma segura. """
+    with stats_lock:
+        with open(STATS_FILE, 'w') as f:
+            json.dump(app_stats, f)
 
 app = Flask(__name__)
 DOWNLOAD_FOLDER = 'downloads'
 
-# Garante que a pasta de downloads exista
-if not os.path.exists(DOWNLOAD_FOLDER):
-    os.makedirs(DOWNLOAD_FOLDER)
 
 @app.route('/')
 def index():
@@ -144,4 +185,25 @@ def progress(task_id):
 @app.route('/download/<filename>')
 def download_file(filename):
     """ Rota para servir o arquivo MP3 para download. """
+    # Incrementa o contador de downloads
+    with stats_lock:
+        app_stats.setdefault('downloads_completed', 0)
+        app_stats['downloads_completed'] += 1
+    save_stats()
     return send_from_directory(DOWNLOAD_FOLDER, filename, as_attachment=True)
+
+@app.route('/stats')
+def stats():
+    """ Retorna as estatísticas da aplicação. """
+    return jsonify(app_stats)
+
+# Garante que a pasta de downloads exista e carrega as estatísticas ao iniciar
+if not os.path.exists(DOWNLOAD_FOLDER):
+    os.makedirs(DOWNLOAD_FOLDER)
+
+load_stats()
+
+# Inicia a thread de limpeza em segundo plano
+cleanup_thread = threading.Thread(target=run_cleanup_scheduler, daemon=True)
+cleanup_thread.start()
+print("Thread de limpeza de arquivos iniciada.")
