@@ -21,6 +21,7 @@ YDL_OPTIONS = {
         'preferredquality': '192',
     }],
     'noplaylist': True, # Evita baixar playlists inteiras
+    'cookiefile': 'cookies.txt', # Usa o arquivo de cookies para autenticação
     # 'ffmpeg_location' não é mais necessário, pois o FFmpeg estará no PATH do container.
 }
 
@@ -96,7 +97,12 @@ def convert():
 
     try:
         # Extrai informações rapidamente sem fazer o download
-        with yt_dlp.YoutubeDL({'noplaylist': True, 'quiet': True}) as ydl:
+        ydl_opts_info = {
+            'noplaylist': True,
+            'quiet': True,
+            'cookiefile': 'cookies.txt'
+        }
+        with yt_dlp.YoutubeDL(ydl_opts_info) as ydl:
             info_dict = ydl.extract_info(video_url, download=False)
             title = info_dict.get('title', 'Título desconhecido')
             thumbnail = info_dict.get('thumbnail', None)

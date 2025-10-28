@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg && \
 # Copiamos primeiro para aproveitar o cache do Docker.
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
+COPY cookies.txt .
 
 # 5. Copiar o resto do código da aplicação para o container
 COPY . .
